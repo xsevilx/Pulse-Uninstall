@@ -1,10 +1,11 @@
-﻿#test for and uninstall Pulse Secure 5.3
+#test for and uninstall Pulse Secure 5.3
 if ((Test-Path "C:\Program Files (x86)\Pulse Secure\Pulse\PulseUninstall.exe" -PathType Leaf) -eq "true"){
     stop-process -name Pulse -Force
     stop-process -name PulseSecureService -Force
     cd "C:\Program Files (x86)\Pulse Secure\Pulse"
     .\PulseUninstall.exe /silent=1
-    Start-Sleep 180
+    Write-Host "PulseUninstall.exe was Executed"
+    Start-Sleep 240
     }
 else {Write-Host "PulseUninstall.exe does not exist."}
 
@@ -20,6 +21,7 @@ foreach($user in $users)
         .\uninstall.exe /silent=1
         Start-Sleep 30
         Stop-Process -name "Au_" -Force
+        Write-Host "uninstall.exe Executed for $user"
         }
     else {Write-Host "$user does not have uninstall.exe"}
     }
@@ -28,16 +30,19 @@ foreach($user in $users)
 if ((Test-Path "C:\WINDOWS\Downloaded Program Files\PulseSetupClientCtrlUninstaller64.exe" -PathType Leaf) -eq "true"){
     cd "C:\WINDOWS\Downloaded Program Files\"
     .\PulseSetupClientCtrlUninstaller64.exe /silent=1
-    Start-Sleep 10
+    Start-Sleep 15
     Stop-Process -name "Au_" -Force
+    Write-Host "PulseSetupClientUninstaller64.exe Executed"
     }
 else { Write-Host 'PulseSetupClientCtrlUninstaller64.exe does not exist'}
 
 #check for and uninstall Pulse Secure Setup Client x86
 if ((Test-Path "C:\WINDOWS\Downloaded Program Files\PulseSetupClientCtrlUninstaller.exe" -PathType Leaf) -eq "true"){
+    cd "C:\WINDOWS\Downloaded Program Files\"
     .\PulseSetupClientCtrlUninstaller.exe /silent=1
-    Start-Sleep 10
+    Start-Sleep 15
     Stop-Process -name "Au_" -Force
+    Write-Host "PulseSetupVlientUninstaller.exe Executed"
     }
 else {Write-Host 'PulseSetupClientCtrlUninstaller.exe does not exist'}
 
@@ -49,3 +54,20 @@ if ($Pulse.name -eq "Pulse Secure"){
     Write-Host "Pulse Secure has been completely uninstalled!"#this output means Pulse needed this extra step to be completely uninstalled
     }
 Else {Write-Host "Pulse Secure is completely uninstalled!"}#this output means Pulse did not need this extra step to be completely uninstalled
+
+#use get-package to make sure pulse secure installer service isnt lingering
+$PulsePack = Get-Package -Provider Programs -IncludeWindowsInstaller | Where-Object{$_.Name -eq "Pulse Secure installer service"} | Select-Object -Property Name
+if ($PulsePack.name -eq "Pulse Secure installer service"){
+    Uninstall-Package -Name "Pulse Secure installer service" -force | Out-Null
+    Write-Host "Pulse Secure installer service Package removed!"#this output means Pulse needed this extra step to be completely uninstalled
+    }
+Else {Write-Host "Pulse Secure installer service Package NOT installed"}#this output means Pulse did not need this extra step to be completely uninstalled
+
+#check if get-package still shows pulse as installed and uninstall-package is=f it does.
+$PulsePack2 = Get-Package -Provider Programs -IncludeWindowsInstaller | Where-Object{$_.Name -eq "Pulse Secure"} | Select-Object -Property Name
+if ($PulsePack.name -eq "Pulse Secure"){
+    Uninstall-Package -Name "Pulse Secure" -force | Out-Null
+    Write-Host "Pulse Secure Package Uninstalled!"#this output means Pulse needed this extra step to be completely uninstalled
+    }
+Else {Write-Host "Pulse Secure Package NOT installed"}#this output means Pulse did not need this extra step to be completely uninstalled
+Write-Host "DONE"
